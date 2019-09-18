@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<head>
+    <title>
+        Python Scrapping Project
+    </title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-balham.css">
+    <link rel="stylesheet" href="ag-grid-common.css">
+    </script>
+    <script type="text/javascript">
+        var columnDefs = [
+                                {headerName: "Product", field: "product", sortable: true, filter: true, width: 200 },        
+                                {headerName: "Source", field: "source", sortable: true, filter: true, width: 200 },
+                                {headerName: "Title", field: "title", sortable: true, filter: true, width: 400 },
+                                {headerName: "Description", field: "description", sortable: true, filter: true, width: 900 },
+                                {headerName: "Rating", field: "rating", sortable: true, filter: true, width: 200 }
+                             ];
+            var gridOptions = {
+                columnDefs: columnDefs,
+                rowData: [],
+                rowHeight : 50
+                };
+        function getReviews(){
+            $('#myGrid').html('');
+            
+            if($('#productName').val() == ''){
+                $('#error').show();
+                $('#productName').addClass('error');
+                return false;
+            }else{
+                $('#error').hide();
+                $('#loading').show();
+                $('#productName').removeClass('error');
+            }
+            var url;
+            if($('#type').val() == 'fetch'){
+                url = 'http://127.0.0.1:5000/api/v1.0/reviews1?productName='+$('#productName').val();
+            }else{
+                url = 'http://127.0.0.1:5000/api/v1.0/reviews?productName='+$('#productName').val();
+            }
+            
+            
+            $.get(url, function(data, status){
+                $('#loading').hide();
+                if(data.reviewList.length >0){
+                    $('#exportButton').show();
+                }
+                //console.log('Hello====================', data);
+                var rowData = data.reviewList;
+                gridOptions = {
+                columnDefs: columnDefs,
+                rowData: rowData,
+                rowHeight: 40,
+                pagination: true,
+                suppressCsvExport:false
+                };
+                var eGridDiv = document.querySelector('#myGrid');
+                new agGrid.Grid(eGridDiv, gridOptions);
+            });
+            
+        }
+
+        function reset(){
+            $('#productName').val('');
+            $('#error').hide();
+            $('#productName').removeClass('error');
+        }
+
+        function exportToCSV(){
+            gridOptions.api.exportDataAsCsv({'fileName':'data.csv'});
+        }
+</script>
+    
+</head>   
+<body>
+    <div style="width:100%;color:#fff;font-size:25px;background-color:#000;height:62px;padding:10px 0;">
+        <div style="float:left;display: inline-block;height: 100%;vertical-align: middle;padding-left:20px;width:45%"><img src="logo.png"></div>
+        <div style="float:left;width:45%;vertical-align: middle;height:100%;padding-top:15px;">Product Review System</div> 
+    </div>
+    <div style="clear: both"></div>
+    <div style="margin:30px 0 20px 20px;color:#fff;font-size:15px;">
+        <div>
+            <label style="padding:0 20px 0 0;">Product Name</label>
+            <input placeholder="Product Name" class="form-control" style="width:275px;height: 27px; box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);padding-left:5px;" type="text" name="productName" id="productName" value="" >
+            <span id="error" style="display:none;color: red;padding-left:5px;">Please fill Product name.</span>
+        </div>
+
+        <div>
+            <label style="padding:0 20px 0 0;">Type</label>
+            <select name="type" id="type">
+                <option value="fetch">Fetch</option>
+                <option value="insert">Insert</option>
+            </select>    
+        </div>    
+
+        <div style="margin-top:20px;">
+            <label>&nbsp;</label>
+            <input  style="width:90px;height: 27px;box-shadow: rgba(0, 0, 0, .5);margin-left:110px;padding:0 10px;font-size:15px;" type="button" onclick="getReviews()" value="Submit">
+            <input style="width:90px;height: 27px;box-shadow: rgba(0, 0, 0, .5);margin-left:7px;padding:0 10px;font-size:15px;" type="button" onclick="reset()" value="Reset">
+        </div>
+    </div>
+    <div class="ag-grid-table">
+            <img id="exportButton" style="display:none;width:30px;height:30px;float:right;cursor:pointer;padding-right:10px;" src="download1.png" onclick="exportToCSV()" alt="Download" title="Download">
+            <input id="exportButton" style="display:none;width:90px;height: 27px;box-shadow: rgba(0, 0, 0, .5);margin-left:7px;padding:0 10px;font-size:15px;float:right;" type="button" onclick="exportToCSV()" value="Download">
+            <div id="loading" class="loader" style="display: none;"></div>
+            <div id="myGrid" style="height:710px;" class="ag-theme-balham"></div>
+    </div>    
+</body>
+</html>
