@@ -13,16 +13,17 @@
     </script>
     <script type="text/javascript">
         var columnDefs = [
-                                {headerName: "Product", field: "product", sortable: true, filter: true, width: 200 },        
+                                {headerName: "Product", field: "product", sortable: true, filter: true, width: 225 },        
                                 {headerName: "Source", field: "source", sortable: true, filter: true, width: 200 },
                                 {headerName: "Title", field: "title", sortable: true, filter: true, width: 400 },
-                                {headerName: "Description", field: "description", sortable: true, filter: true, width: 900 },
-                                {headerName: "Rating", field: "rating", sortable: true, filter: true, width: 200 }
+                                {headerName: "Description", field: "description", sortable: true, filter: true, width: 850 },
+                                {headerName: "Rating", field: "rating", sortable: true, filter: true, width: 150 }
                              ];
             var gridOptions = {
                 columnDefs: columnDefs,
                 rowData: [],
-                rowHeight : 50
+                rowHeight : 50,
+                floatingFilter: true
                 };
         function getReviews(){
             $('#myGrid').html('');
@@ -42,25 +43,28 @@
             }else{
                 url = 'https://weather-mess.herokuapp.com/api/v1.0/reviews?productName='+$('#productName').val();
             }
-            
+            $('#exportButton').show();
             
             $.get(url, function(data, status){
                 $('#loading').hide();
-                if(data.reviewList.length >0){
-                    $('#exportButton').show();
-                }
-                //console.log('Hello====================', data);
                 var rowData = data.reviewList;
                 gridOptions = {
                 columnDefs: columnDefs,
                 rowData: rowData,
                 rowHeight: 40,
                 pagination: true,
-                suppressCsvExport:false
+                suppressCsvExport:false,
+                floatingFilter: true
                 };
                 var eGridDiv = document.querySelector('#myGrid');
                 new agGrid.Grid(eGridDiv, gridOptions);
-            });
+                if(data.reviewList.length >0){
+                    $('#exportButton').show();
+                }
+            }) .fail(function() {
+                $('#loading').hide();
+                alert( "error" );
+  })
             
         }
 
@@ -68,6 +72,7 @@
             $('#productName').val('');
             $('#error').hide();
             $('#productName').removeClass('error');
+            $('#loading').hide();
         }
 
         function exportToCSV(){
