@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="css/ag-grid-common.css">
     </script>
     <script type="text/javascript">
+        if(window.location.host == 'localhost:8080'){
+            var domain = 'http://127.0.0.1:5000/';
+        }else{
+            var domain = 'https://weather-mess.herokuapp.com/';
+        }
         var columnDefs = [
                                 {headerName: "Product", field: "product", sortable: true, filter: true, width: 225 },        
                                 {headerName: "Source", field: "source", sortable: true, filter: true, width: 200 },
@@ -25,23 +30,73 @@
                 rowHeight : 50,
                 floatingFilter: true
                 };
-        function getReviews(){
-            $('#myGrid').html('');
+        function displayTextBox(){
+            $('#errorType').hide();
+            $('#productListBlock').hide('');
+            $('#productTextBlock').hide('');
+            if($('#actionType').val() == 'insert'){
+                $('#productTextBlock').show('slow');
+            }
+            if($('#actionType').val() == 'fetch'){
+                $('#productListBlock').show('slow');
+                getProductList();
+            }
             
-            if($('#productName').val() == ''){
-                $('#error').show();
-                $('#productName').addClass('error');
+        }      
+        
+        function getProductList(){
+            url = domain+'api/v1.0/products';
+            $.get(url, function(data, status){
+                if(data.productList.length >0){
+                    $.each(data.productList, function(key,val) {             
+                        option = '<option value="'+val+'">'+val+'</option>'
+                        $('#productValue').append(option);
+                    });  
+                }
+            }) 
+        }
+
+        function getReviews(){
+            $('#errorProduct').hide();
+            $('#productName').removeClass('error');
+            $('#myGrid').html('');
+            if($('#actionType').val() == ''){
+                $('#errorType').show();
                 return false;
             }else{
-                $('#error').hide();
-                $('#loading').show();
-                $('#productName').removeClass('error');
+                $('#errorType').hide();
+            }
+            if($('#actionType').val() == 'insert'){
+                if($('#productName').val() == ''){
+                    $('#error').show();
+                    $('#productName').addClass('error');
+                    return false;
+                }else{
+                    $('#error').hide();
+                    $('#loading').show();
+                    $('#productName').removeClass('error');
+                }
+            }  
+            
+            if($('#actionType').val() == 'fetch'){
+                if($('#productValue').val() == ''){
+                    $('#errorProduct').show();
+                    return false;
+                }else{
+                    $('#errorProduct').hide();
+                    $('#loading').show();
+                }
             }
             var url;
-            if($('#type').val() == 'fetch'){
-                url = 'https://weather-mess.herokuapp.com/api/v1.0/reviews1?productName='+$('#productName').val();
+            //alert($('#actionType').val());
+            if($('#actionType').val() == 'fetch'){
+                //url = 'https://weather-mess.herokuapp.com/api/v1.0/reviews1?productName='+$('#productValue').val();
+                //url='http://127.0.0.1:5000/api/v1.0/reviews1?productName='+$('#productValue').val();
+                url = domain+'api/v1.0/reviews1?productName='+$('#productValue').val();
             }else{
-                url = 'https://weather-mess.herokuapp.com/api/v1.0/reviews?productName='+$('#productName').val();
+                //url = 'https://weather-mess.herokuapp.com/api/v1.0/reviews?productName='+$('#productName').val();
+                //url = 'https://weather-mess.herokuapp.com/api/v1.0/reviews?productName='+$('#productName').val();
+                url = domain+'api/v1.0/reviews1?productName='+$('#productName').val();
             }
             $('#exportButton').show();
             
@@ -64,17 +119,19 @@
             }) .fail(function() {
                 $('#loading').hide();
                 alert( "error" );
-  })
-            
+        })
         }
 
         function reset(){
+            $('#actionType').val('');
             $('#productName').val('');
+            $('#errorType').hide();
+            $('#productTextBlock').hide();
+            $('#productListBlock').hide();
             $('#error').hide();
             $('#productName').removeClass('error');
             $('#loading').hide();
         }
-
         function exportToCSV(){
             gridOptions.api.exportDataAsCsv({'fileName':'data.csv'});
         }
@@ -88,18 +145,31 @@
     </div>
     <div style="clear: both"></div>
     <div style="margin:30px 0 20px 20px;color:#fff;font-size:15px;">
-        <div>
+
+            <div>
+                    <label style="padding:0 20px 0 0;width:100px;display: inline-block">Action type</label>
+                    <select name="actionType" id="actionType" onchange="displayTextBox()" class="form-control" style="width:283px;height: 32px; box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);padding-left:5px;" >
+                        <option value="">--Select--</option>
+                        <option value="fetch">Fetch</option>
+                        <option value="insert">Insert</option>
+                    </select>    
+                    <span id="errorType" style="display:none;color: red;padding-left:5px;">Please select action type.</span>
+                </div>    
+        
+        
+        <div id="productTextBlock" style="margin-top:20px;display:none">
             <label style="padding:0 20px 0 0;width:100px;display: inline-block">Product Name</label>
             <input placeholder="Product Name" class="form-control" style="width:275px;height: 27px; box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);padding-left:5px;" type="text" name="productName" id="productName" value="" >
             <span id="error" style="display:none;color: red;padding-left:5px;">Please fill Product name.</span>
         </div>
 
-        <div style="margin-top:20px;">
-            <label style="padding:0 20px 0 0;width:100px;display: inline-block">Type</label>
-            <select class="form-control" style="width:283px;height: 32px; box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);padding-left:5px;"  name="type" id="type">
-                <option value="fetch">Fetch</option>
-                <option value="insert">Insert</option>
-            </select>    
+        <div id="productListBlock" style="margin-top:20px;display:none">
+                <label style="padding:0 20px 0 0;width:100px;display: inline-block">Product List</label>
+                <select name="productValue" id="productValue" class="form-control" style="width:283px;height: 32px; box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);padding-left:5px;">
+                    <option value="">--Select--</option>
+                    
+                </select>  
+                <span id="errorProduct" style="display:none;color: red;padding-left:5px;">Please select any Product.</span>  
         </div>    
 
         <div style="margin-top:20px;">
